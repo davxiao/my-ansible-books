@@ -1,0 +1,39 @@
+---
+- name: Add a line to hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: 'a new line here'
+
+- name: Copy agent RPM
+  copy:
+    src: file-must-be-exist-in-files-folder
+    dest: /tmp/Agent-1.0.x86_64.rpm
+
+- name: Create agent installation directory
+ file:
+  path: /app/target-dir
+  state: directory
+   owner: agnt-user
+   group: agnt-grp
+  mode: 0775
+become: yes
+
+- name: Install agent RPM
+  yum:
+    name: /tmp/Agent-1.0.x86_64.rpm
+    state: present
+    disable_gpg_check: yes
+  become: yes
+
+- name: install agent configuration file
+  copy:
+    src: config.dat
+    dest: /app/target-dir/config.dat
+    owner: agnt-user 
+    group: agnt-grp
+    mode: 0644
+  become: yes
+
+- name: start agent service
+  service: name=agent-name state=started
+  become: yes
