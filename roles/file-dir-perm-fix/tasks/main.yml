@@ -1,0 +1,3 @@
+---
+- name: set permission as 755
+  file: dest=/app/dir mode=u=rwX,g=rX,o=rX recurse=yes

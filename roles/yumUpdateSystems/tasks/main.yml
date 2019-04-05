@@ -1,0 +1,9 @@
+---
+- name: upgrade all packages
+  yum:
+    name: '*'
+    state: latest
+    exclude: java*
+
+- name: Reboot Host if packages were updated
+  shell: sleep 2 && shutdown -r now "Reboot after Ansible updates"
