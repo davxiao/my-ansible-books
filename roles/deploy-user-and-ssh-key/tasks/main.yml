@@ -1,0 +1,44 @@
+---
+#
+# Using the `-e ...` allows you to only run the playbook against a specific user as apposed to the whole userlist
+# For example: 
+#ansible-playbook playbooks/this_playbook.yml -i inventory/sandbox/the-hosts -u ec2-user -e '{userlimit: [ansible]}'
+#
+# david.xiao
+#
+
+- name: Create user groups
+  group:
+    name: "{{ item.group }}"
+    state: present
+  with_items:
+    - { group: chgadm }
+
+- name: add chgadm group to sudo
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%chgadm\s'
+    line: '%chgadm ALL=(ALL) NOPASSWD: ALL'
+
+- vars:
+    userlist:
+      - { username: 'ansible', group: 'chgadm' }
+
+  block:
+    - name: Create users
+      user:
+        name: "{{ item.username }}"
+        createhome: yes
+        shell: /bin/bash
+        groups: "{{ item.group }}"
+        append: yes
+      loop: "{{ userlist }}"
+      when: userlimit is not defined or item.username in userlimit
+
+    - name: Install users public keys for SSH access
+      authorized_key:
+        user: "{{ item.username }}"
+        key: "{{ lookup('file', 'authorized_keys.' ~ item.username ~ '.pub') }}"
+      loop: "{{ userlist }}"
+      when: userlimit is not defined or item.username in userlimit
